@@ -1,15 +1,11 @@
-use rust_weather::Config;
-use std::{env, process};
+use rust_weather::Args;
+use std::process;
+use structopt::StructOpt;
 
 fn main() {
-	let args: Vec<String> = env::args().collect();
+	let args = Args::from_args();
 
-	let config = Config::new(&args).unwrap_or_else(|err| {
-		println!("{}", err);
-		process::exit(1);
-	});
-
-	if let Err(err) = rust_weather::run(&config) {
+	if let Err(err) = rust_weather::run(args) {
 		println!("{}", err);
 		process::exit(1);
 	}

@@ -1,18 +1,25 @@
 use std::{
 	error::Error,
 	fmt::{self, Display},
+	str::FromStr,
 };
 
 use reqwest::{blocking as reqwest_blocking, IntoUrl};
 
 use serde_json::Value;
 
-use crate::Config;
+use crate::Args;
 
 #[derive(Debug)]
 pub struct Location {
 	lat: f64,
 	lon: f64,
+}
+
+impl Display for Location {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "({}, {})", self.lat, self.lon)
+	}
 }
 
 #[derive(Debug, Clone)]
@@ -35,8 +42,8 @@ impl WeatherUnit {
 	}
 	fn to_pressure_unit(&self) -> &str {
 		match self {
-			WeatherUnit::Imperial => "PSI",
-			WeatherUnit::Metric => "Pa",
+			WeatherUnit::Imperial => "hPa",
+			WeatherUnit::Metric => "hPa",
 		}
 	}
 }
@@ -50,12 +57,15 @@ impl Display for WeatherUnit {
 	}
 }
 
-impl From<String> for WeatherUnit {
-	fn from(s: String) -> WeatherUnit {
-		match s.as_str() {
-			"imperial" => WeatherUnit::Imperial,
-			"metric" => WeatherUnit::Metric,
-			other => panic!("Invalid type {}", other),
+impl FromStr for WeatherUnit {
+	type Err = WeatherResultError;
+	fn from_str<'a>(s: &'a str) -> Result<WeatherUnit> {
+		match s {
+			"imperial" | "i" => Ok(WeatherUnit::Imperial),
+			"metric" | "m" => Ok(WeatherUnit::Metric),
+			other => Err(WeatherResultError::InvalidWeatherUnit {
+				given: other.to_string(),
+			}),
 		}
 	}
 }
@@ -107,6 +117,10 @@ pub enum WeatherResultError {
 	NoResult,
 	///Required fields were missing
 	MissingFields,
+	//Failed to parse the given weather unit
+	InvalidWeatherUnit {
+		given: String,
+	},
 }
 
 impl Error for WeatherResultError {}
@@ -119,6 +133,9 @@ impl fmt::Display for WeatherResultError {
 			}
 			Self::NoResult => write!(f, "No result was found"),
 			Self::MissingFields => write!(f, "Required fields were missing"),
+			Self::InvalidWeatherUnit { given } => {
+				write!(f, "Failed to parse the given weather unit: {}", given)
+			}
 		}
 	}
 }
@@ -126,6 +143,12 @@ impl fmt::Display for WeatherResultError {
 impl From<reqwest::Error> for WeatherResultError {
 	fn from(error: reqwest::Error) -> Self {
 		WeatherResultError::RequestError(error)
+	}
+}
+
+fn output_if_verbose(msg: String, args: &Args) {
+	if args.verbose {
+		println!("{}", msg)
 	}
 }
 
@@ -161,22 +184,34 @@ fn parse_location(value: Value) -> Result<Location> {
 	})
 }
 
-fn get_location(config: &Config) -> Result<Location> {
+fn get_location(args: &Args) -> Result<Location> {
 	let url = format!(
 		"https://api.openweathermap.org/geo/1.0/direct?q={location}&limit={limit}&appid={key}",
-		location = config.location,
+		location = args.location,
 		limit = 1,
-		key = config.key,
+		key = args.key,
+	);
+
+	output_if_verbose(
+		format!("Requesting location of \"{}\"", args.location),
+		args,
 	);
 
 	let results = api_request(url)?;
 
+	output_if_verbose(format!("Parsing location of \"{}\"", args.location), args);
+
 	let location = parse_location(results)?;
+
+	output_if_verbose(
+		format!("Got location of \"{}\": {}", args.location, location),
+		args,
+	);
 
 	Ok(location)
 }
 
-fn parse_weather(config: &Config, value: Value) -> Result<WeatherResult> {
+fn parse_weather(args: &Args, value: Value) -> Result<WeatherResult> {
 	let result = match value {
 		Value::Object(object) => object,
 		_ => return Err(WeatherResultError::NoResult),
@@ -196,31 +231,37 @@ fn parse_weather(config: &Config, value: Value) -> Result<WeatherResult> {
 		temp_max: main.get("temp_max").unwrap().as_f64().unwrap(),
 		pressure: main.get("pressure").unwrap().as_f64().unwrap(),
 		humidity: main.get("humidity").unwrap().as_f64().unwrap(),
-		unit: config.unit.clone(),
+		unit: args.unit.clone(),
 	})
 }
 
-fn get_weather_at_location(config: &Config, location: Location) -> Result<WeatherResult> {
+fn get_weather_at_location(args: &Args, location: Location) -> Result<WeatherResult> {
 	//Handle result individually
 	let url = format!(
 		"https://api.openweathermap.org/data/2.5/weather?\
 		lat={lat}&lon={lon}&units={units}&appid={key}",
 		lat = location.lat,
 		lon = location.lon,
-		units = config.unit.to_param(),
-		key = config.key,
+		units = args.unit.to_param(),
+		key = args.key,
 	);
+
+	output_if_verbose(format!("Requesting weather at {}", location), args);
 
 	let results = api_request(url)?;
 
-	let weather = parse_weather(&config, results)?;
+	output_if_verbose(format!("Parsing weather at {}", location), args);
+
+	let weather = parse_weather(&args, results)?;
+
+	output_if_verbose(format!("Got weather at {}", location), args);
 
 	Ok(weather)
 }
 
-pub fn config_to_weather(config: &Config) -> Result<WeatherResult> {
-	let location = get_location(config)?;
-	let weather = get_weather_at_location(config, location)?;
+pub fn args_to_weather(args: &Args) -> Result<WeatherResult> {
+	let location = get_location(args)?;
+	let weather = get_weather_at_location(args, location)?;
 
 	Ok(weather)
 }
