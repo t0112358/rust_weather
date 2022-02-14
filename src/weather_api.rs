@@ -113,6 +113,11 @@ impl fmt::Display for WeatherResult {
 pub enum WeatherResultError {
 	///Something went wrong getting the request
 	RequestError(reqwest::Error),
+	///Something went wrong with the API request
+	APIError {
+		code: i64,
+		message: String,
+	},
 	///No result was found
 	NoResult,
 	///Required fields were missing
@@ -130,6 +135,9 @@ impl fmt::Display for WeatherResultError {
 		match self {
 			Self::RequestError(err) => {
 				write!(f, "Something went wrong getting the request: {}", err)
+			}
+			Self::APIError { code, message } => {
+				write!(f, "API returned error code {code}: {message}")
 			}
 			Self::NoResult => write!(f, "No result was found"),
 			Self::MissingFields => write!(f, "Required fields were missing"),
@@ -156,6 +164,35 @@ fn api_request<U: IntoUrl>(url: U) -> Result<Value> {
 	let client = reqwest_blocking::Client::new();
 
 	let result: Value = client.get(url).send()?.json()?;
+
+	if let Some(error) = result.as_object() {
+		let code = error.get("cod");
+		let message = error.get("message");
+		if code.is_some() {
+			if message.is_some() {
+				let code = code.unwrap().as_i64();
+				let message = message.unwrap().as_str();
+				if code.is_some() && message.is_some() {
+					return Err(WeatherResultError::APIError {
+						code: code.unwrap(),
+						message: message.unwrap().to_string(),
+					});
+				}
+			} else {
+				if let Some(code) = code.unwrap().as_i64() {
+					if code >= 400 {
+						let message = match code {
+							404 => "Result not found",
+							_ => "Unknown error",
+						}
+						.to_string();
+
+						return Err(WeatherResultError::APIError { code, message });
+					}
+				}
+			}
+		}
+	}
 
 	Ok(result)
 }
