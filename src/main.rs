@@ -6,7 +6,7 @@ fn main() {
 	let args = Args::from_args();
 
 	if let Err(err) = rust_weather::run(args) {
-		println!("{}", err);
+		eprintln!("{}", err);
 		process::exit(1);
 	}
 
