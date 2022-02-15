@@ -5,15 +5,22 @@ mod weather_api;
 use structopt::StructOpt;
 use weather_api::WeatherUnit;
 
+///Uses open weather api's database to provide weather data via a CLI.
 #[derive(StructOpt, Debug)]
-#[structopt(about = "Uses open weather api's database to provide weather data via a CLI.")]
 pub struct Args {
+	///The location to retrieve weather of
 	#[structopt(parse(from_str = parse_location))]
 	location: String,
+
+	///The weather unit to be used, "imperial" or "metric"
 	#[structopt(short, long, default_value = "imperial")]
 	unit: WeatherUnit,
+
+	///Enables verbose output
 	#[structopt(short, long)]
 	verbose: bool,
+
+	///The Open Weather Api Key, recommended to use the environment variable variant
 	#[structopt(
 		long = "open_weather_api_key",
 		env = "OPEN_WEATHER_API_KEY",
