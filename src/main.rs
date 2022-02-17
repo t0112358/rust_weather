@@ -1,9 +1,9 @@
+use clap::Parser;
 use rust_weather::Args;
 use std::process;
-use structopt::StructOpt;
 
 fn main() {
-	let args = Args::from_args();
+	let args = Args::parse();
 
 	if let Err(err) = rust_weather::run(args) {
 		eprintln!("{}", err);

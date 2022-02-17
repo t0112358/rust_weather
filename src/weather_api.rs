@@ -1,4 +1,5 @@
 use std::{
+	collections::HashMap,
 	error::Error,
 	fmt::{self, Display},
 	str::FromStr,
@@ -46,14 +47,9 @@ impl WeatherUnit {
 			WeatherUnit::Metric => "hPa",
 		}
 	}
-}
 
-impl Display for WeatherUnit {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		match self {
-			WeatherUnit::Imperial => write!(f, "Imperial"),
-			WeatherUnit::Metric => write!(f, "Metric"),
-		}
+	fn get_options() -> &'static str {
+		"[`imperial`, `i`, `metric`, `m`]"
 	}
 }
 
@@ -66,6 +62,15 @@ impl FromStr for WeatherUnit {
 			other => Err(WeatherResultError::InvalidWeatherUnit {
 				given: other.to_string(),
 			}),
+		}
+	}
+}
+
+impl Display for WeatherUnit {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		match self {
+			WeatherUnit::Imperial => write!(f, "Imperial"),
+			WeatherUnit::Metric => write!(f, "Metric"),
 		}
 	}
 }
@@ -142,7 +147,12 @@ impl fmt::Display for WeatherResultError {
 			Self::NoResult => write!(f, "No result was found"),
 			Self::MissingFields => write!(f, "Required fields were missing"),
 			Self::InvalidWeatherUnit { given } => {
-				write!(f, "Failed to parse the given weather unit: {}", given)
+				write!(
+					f,
+					"`{}`. Possible values: {}",
+					given,
+					WeatherUnit::get_options()
+				)
 			}
 		}
 	}
