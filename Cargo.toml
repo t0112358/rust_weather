@@ -1,4 +1,5 @@
 [package]
+categories = ["api-bindings", "command-line-utilities"]
 description = "Uses open weather api's database to provide weather data via a CLI"
 edition = "2021"
 keywords = ["weather", "cli", "open-weather", "api"]
