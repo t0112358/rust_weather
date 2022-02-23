@@ -1,5 +1,8 @@
 [package]
+description = "Uses open weather api's database to provide weather data via a CLI"
 edition = "2021"
+keywords = ["weather", "cli", "open-weather", "api"]
+license = "GNU AGPLv3"
 name = "rust_weather"
 version = "1.0.0"
 
