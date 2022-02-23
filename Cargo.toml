@@ -5,9 +5,9 @@ edition = "2021"
 keywords = ["weather", "cli", "open-weather", "api"]
 license = "GNU AGPLv3"
 name = "rust_weather"
+readme = "README.md"
+repository = "https://github.com/t0112358/rust_weather/"
 version = "1.0.0"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 clap = {version = "3.0.14", features = ["std", "color", "derive", "suggestions", "unicode", "cargo", "env", "wrap_help"]}
