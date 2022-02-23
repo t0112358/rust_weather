@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use super::Args;
+use super::Command;
 use crate::weather_api::{Client, WeatherUnit};
 use clap::Parser;
 
@@ -17,10 +17,10 @@ pub struct WeatherCommand {
 }
 
 impl WeatherCommand {
-	pub fn run(&self, args: &Args) -> Result<(), Box<dyn Error>> {
+	pub fn run(&self, command: &Command) -> Result<(), Box<dyn Error>> {
 		let client = Client::new()
 			.with_unit(self.unit.clone())
-			.login(args.key.clone());
+			.login(command.key.clone());
 
 		let weather_result = client.get_weather_at_string_loc(&self.location)?;
 

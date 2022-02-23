@@ -11,7 +11,7 @@ mod weather;
 ///Uses open weather api's database to provide weather data via a CLI.
 #[derive(Parser, Debug)]
 #[clap(author, version)]
-pub struct Args {
+pub struct Command {
 	///The Open Weather Api Key, recommended to use the environment variable variant
 	#[clap(
 		long = "open_weather_api_key",
@@ -25,7 +25,7 @@ pub struct Args {
 	pub verbose: bool,
 
 	#[clap(subcommand)]
-	pub command: Subcommand,
+	pub subcommand: Subcommand,
 }
 
 #[derive(Parser, Debug)]
@@ -34,9 +34,11 @@ pub enum Subcommand {
 	Location(LocationCommand),
 }
 
-pub fn run(args: &Args) -> Result<(), Box<dyn Error>> {
-	match &args.command {
-		Subcommand::Weather(weather_command) => weather_command.run(args),
-		Subcommand::Location(location_command) => location_command.run(args),
+impl Command {
+	pub fn run(&self) -> Result<(), Box<dyn Error>> {
+		match &self.subcommand {
+			Subcommand::Weather(subcommand) => subcommand.run(self),
+			Subcommand::Location(subcommand) => subcommand.run(self),
+		}
 	}
 }

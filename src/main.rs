@@ -1,13 +1,13 @@
 use clap::Parser;
 use env_logger::Target;
 use log::LevelFilter;
-use rust_weather::cli::{self, Args};
+use rust_weather::cli::Command;
 use std::process;
 
 fn main() {
-	let args = Args::parse();
+	let command = Command::parse();
 
-	let filter_level = match args.verbose {
+	let filter_level = match command.verbose {
 		true => LevelFilter::Debug,
 		false => LevelFilter::Warn,
 	};
@@ -21,7 +21,7 @@ fn main() {
 		.target(Target::Stdout)
 		.init();
 
-	if let Err(err) = cli::run(&args) {
+	if let Err(err) = command.run() {
 		eprintln!("{}", err);
 		process::exit(1);
 	}
