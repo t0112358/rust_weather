@@ -2,6 +2,11 @@
 categories = ["api-bindings", "command-line-utilities"]
 description = "Uses open weather api's database to provide weather data via a CLI"
 edition = "2021"
+include = [
+  "**/*.rs",
+  "Cargo.toml",
+  "Cargo.lock",
+]
 keywords = ["weather", "cli", "open-weather", "api"]
 license = "AGPL-3.0"
 name = "rust_weather"
