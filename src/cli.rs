@@ -37,8 +37,8 @@ pub enum Subcommand {
 impl Command {
 	pub fn run(&self) -> Result<(), Box<dyn Error>> {
 		match &self.subcommand {
-			Subcommand::Weather(subcommand) => subcommand.run(self),
-			Subcommand::Location(subcommand) => subcommand.run(self),
+			Subcommand::Weather(subcommand) => subcommand.run(&self.key),
+			Subcommand::Location(subcommand) => subcommand.run(&self.key),
 		}
 	}
 }

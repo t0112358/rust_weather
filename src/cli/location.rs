@@ -1,6 +1,5 @@
 use std::error::Error;
 
-use super::Command;
 use crate::weather_api::{Client, Location};
 use clap::Parser;
 
@@ -13,8 +12,8 @@ pub struct LocationCommand {
 }
 
 impl LocationCommand {
-	pub fn run(&self, command: &Command) -> Result<(), Box<dyn Error>> {
-		let client = Client::new().login(command.key.clone());
+	pub fn run(&self, key: &String) -> Result<(), Box<dyn Error>> {
+		let client = Client::new().login(key.clone());
 
 		let location = Location::from_string(&client, &self.location)?;
 
